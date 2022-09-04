@@ -35,11 +35,13 @@ jobs:
           toolchain: stable
           override: true
 
+      - run: docker-compose -f tests/docker-compose.yml run -d
+
+      # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
         with:
           command: build
 
-      - run: docker-compose -f tests/docker-compose.yml run -d
 
       - uses: actions-rs/cargo@v1
         with:
@@ -60,12 +62,13 @@ jobs:
           components: clippy
 
       - run: docker-compose -f tests/docker-compose.yml run -d
-      - run: sleep 60
+
+      # Build crates while Kafka starts.
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
 
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -D warnings
-
-        env:
-          DATABASE_URL: mysql://root:root@localhost:3306/eludris
