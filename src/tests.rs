@@ -37,8 +37,7 @@ mod tests {
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", "oprish-test")
             .set("bootstrap.servers", &brokers)
-            .set("enable.partition.eof", "false")
-            .set("session.timeout.ms", "6000")
+            .set("auto.offset.reset", "largest")
             .create()
             .unwrap();
 
