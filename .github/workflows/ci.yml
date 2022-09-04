@@ -40,14 +40,10 @@ jobs:
           command: build
 
       - run: docker-compose -f tests/docker-compose.yml run -d
-      - run: sleep 60
 
       - uses: actions-rs/cargo@v1
         with:
           command: test
-
-        env:
-          DATABASE_URL: mysql://root:root@localhost:3306/eludris
 
   clippy:
     name: Clippy; Destroyer of Realities.

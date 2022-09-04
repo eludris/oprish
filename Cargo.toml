@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+todel = { path = "../todel", version = "0.1.0" }
+rdkafka = { version = "0.28.0", features = ["cmake-build"] }
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
+log = "0.4.17"
+env_logger = "0.9.0"
