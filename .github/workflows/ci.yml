@@ -35,7 +35,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - run: docker-compose -f tests/docker-compose.yml run -d
+      - run: docker-compose -f tests/docker-compose.yml up -d
 
       # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
@@ -61,7 +61,7 @@ jobs:
           override: true
           components: clippy
 
-      - run: docker-compose -f tests/docker-compose.yml run -d
+      - run: docker-compose -f tests/docker-compose.yml up -d
 
       # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
