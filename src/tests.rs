@@ -35,8 +35,11 @@ mod tests {
         let topic = env::var("TOPIC").unwrap_or_else(|_| "oprish".to_string());
 
         let consumer: StreamConsumer = ClientConfig::new()
-            .set("group.id", "oprish-test")
+            .set("group.id", "oprish_test")
             .set("bootstrap.servers", &brokers)
+            .set("enable.partition.eof", "false")
+            .set("session.timeout.ms", "6000")
+            .set("auto.offset.reset", "earliest")
             .create()
             .unwrap();
 
