@@ -46,7 +46,7 @@ jobs:
         with:
           command: test
         env:
-          INSTANCE_NAME: WooChat
+          RUST_LOG: "trace"
 
   clippy:
     name: Clippy; Destroyer of Realities.
