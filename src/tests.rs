@@ -37,7 +37,6 @@ mod tests {
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", "oprish-test")
             .set("bootstrap.servers", &brokers)
-            .set("auto.offset.reset", "largest")
             .create()
             .unwrap();
 
@@ -62,7 +61,7 @@ mod tests {
                     .unwrap()
                     .payload()
                     .unwrap()
-                    .to_vec(),
+                    .to_vec()
             )
             .unwrap(),
             message

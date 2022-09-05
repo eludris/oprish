@@ -15,6 +15,10 @@ use todel::models::{Feature, Info};
 
 #[launch]
 fn rocket() -> Rocket<Build> {
+    #[cfg(test)]
+    {
+        env::set_var("INSTANCE_NAME", "WooChat")
+    }
     let _ = env_logger::try_init();
 
     let instance_name =
