@@ -1,22 +1,24 @@
-FROM ekidd/rust-musl-builder:stable as builder
+FROM rust:slim-buster as builder
 
 RUN USER=root cargo new --bin oprish
-WORKDIR ./oprish
+WORKDIR /oprish
 
 COPY Cargo.lock Cargo.toml ./
+
+RUN apt-get update && apt-get install -y build-essential
 
 RUN cargo build --release
 RUN rm src/*.rs
 
 COPY ./src ./src
 
-RUN rm ./target/x86_64-unknown-linux-musl/release/deps/oprish*
+RUN rm ./target/release/deps/oprish*
 RUN cargo build --release
 
 
-FROM alpine:latest
+FROM debian:buster-slim
 
-COPY --from=builder /home/rust/src/oprish/target/x86_64-unknown-linux-musl/release/oprish /bin/oprish
+COPY --from=builder /oprish/target/release/oprish /bin/oprish
 
 # Don't forget to also publish these ports in the docker-compose.yml file.
 ARG PORT=8000
