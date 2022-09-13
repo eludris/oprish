@@ -30,14 +30,13 @@ pub async fn index(
     ratelimiter.process_ratelimit().await?;
     let message = message.into_inner();
     if let Err(err) = message.validate() {
-        Ok(ratelimiter.generate_response((
+        Ok(ratelimiter.wrap_response((
             Status::BadRequest,
             Json(MessageCreateResponse::ValidationError(err)),
         )))
     } else {
         producer.send(&message).await;
-        Ok(ratelimiter
-            .generate_response((Status::Ok, Json(MessageCreateResponse::Sucess(message)))))
+        Ok(ratelimiter.wrap_response((Status::Ok, Json(MessageCreateResponse::Sucess(message)))))
     }
 }
 

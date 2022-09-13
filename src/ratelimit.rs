@@ -14,6 +14,8 @@ use todel::oprish::{ErrorResponse, ErrorResponseData, RatelimitHeaderWrapper};
 use crate::Cache;
 
 // cant derive Debug waa
+/// A simple Ratelimiter than can keep track of ratelimit data from KeyDB and add ratelimit
+/// related headers to a response type
 pub struct Ratelimiter {
     cache: Connection<Cache>,
     key: String,
@@ -24,6 +26,7 @@ pub struct Ratelimiter {
 }
 
 impl Ratelimiter {
+    /// Creates a new Ratelimiter
     pub fn new<I>(
         cache: Connection<Cache>,
         route: &str,
@@ -43,6 +46,8 @@ impl Ratelimiter {
             last_reset: 0,
         }
     }
+
+    /// Checks if a bucket is ratelimited, if so returns an Error with an ErrorResponse
     pub async fn process_ratelimit(&mut self) -> Result<(), (Status, Json<ErrorResponse>)> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -58,7 +63,6 @@ impl Ratelimiter {
             .await
             .expect("Coudln't query cache")
         {
-            log::debug!("Reset bucket for {}", self.key);
             self.last_reset = last_reset;
             self.request_count = request_count;
             if now - self.last_reset >= self.reset_after.as_millis() as u64 {
@@ -72,9 +76,10 @@ impl Ratelimiter {
                     .unwrap();
                 self.last_reset = now;
                 self.request_count = 0;
+                log::debug!("Reset bucket for {}", self.key);
             }
-            log::info!("Ratelimited bucket {}", self.key);
             if self.request_count >= self.request_limit {
+                log::info!("Ratelimited bucket {}", self.key);
                 Err(ErrorResponse::new(ErrorResponseData::RateLimited {
                     retry_after: self.last_reset + self.reset_after.as_millis() as u64 - now,
                 })
@@ -100,7 +105,8 @@ impl Ratelimiter {
         }
     }
 
-    pub fn generate_response<R>(&self, data: R) -> RatelimitHeaderWrapper<R> {
+    /// Wraps a response in a RatelimitHeaderWrapper which adds headers relavent to ratelimiting
+    pub fn wrap_response<R>(&self, data: R) -> RatelimitHeaderWrapper<R> {
         RatelimitHeaderWrapper {
             inner: data,
             ratelimit_reset: Header::new(
