@@ -24,3 +24,8 @@ services:
     ports: 
       - "2181:2181"
 
+  keydb:
+    image: eqalpha/keydb
+    ports:
+      - "6379:6379"
+

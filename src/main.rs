@@ -5,13 +5,19 @@ mod tests;
 extern crate rocket;
 
 mod producer;
+mod ratelimit;
 mod routes;
 
 use crate::producer::Producer;
 use rocket::{Build, Rocket};
+use rocket_db_pools::Database;
 use routes::*;
 use std::env;
 use todel::models::{Feature, Info};
+
+#[derive(Database)]
+#[database("redis-cache")]
+pub struct Cache(deadpool_redis::Pool);
 
 #[launch]
 fn rocket() -> Rocket<Build> {
@@ -19,7 +25,8 @@ fn rocket() -> Rocket<Build> {
     {
         env::set_var("INSTANCE_NAME", "WooChat")
     }
-    let _ = env_logger::try_init();
+    dotenv::dotenv().ok();
+    env_logger::try_init().ok();
 
     let instance_name =
         env::var("INSTANCE_NAME").expect("Can't find \"INSTANCE_NAME\" environment variable");
@@ -38,8 +45,9 @@ fn rocket() -> Rocket<Build> {
     let producer = Producer::new(brokers, topic, "oprish".to_string());
 
     rocket::build()
-        .mount("/", routes![index])
+        .mount("/", get_routes())
         .mount("/messages", messages::get_routes())
         .manage(info)
         .manage(producer)
+        .attach(Cache::init())
 }

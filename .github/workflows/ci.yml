@@ -47,6 +47,7 @@ jobs:
           command: test
         env:
           RUST_LOG: "trace"
+          ROCKET_DATABASES: "{redis-cache={url=\"redis://127.0.0.1:6379\"}}"
 
   clippy:
     name: Clippy; Destroyer of Realities.
