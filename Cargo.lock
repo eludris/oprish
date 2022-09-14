@@ -1571,7 +1571,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "todel"
 version = "0.1.0"
-source = "git+https://github.com/eludris/todel#dad0841b0391765547d042842982e6bde2bba095"
+source = "git+https://github.com/eludris/todel#285d266bd47b151373efeaba2603b2e6888cf7c0"
 dependencies = [
  "lazy_static",
  "log",
