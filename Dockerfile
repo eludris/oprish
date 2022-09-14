@@ -21,7 +21,7 @@ FROM debian:buster-slim
 COPY --from=builder /oprish/target/release/oprish /bin/oprish
 
 # Don't forget to also publish these ports in the docker-compose.yml file.
-ARG PORT=8000
+ARG PORT=7159
 
 EXPOSE $PORT
 ENV ROCKET_ADDRESS 0.0.0.0
