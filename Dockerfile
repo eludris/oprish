@@ -3,9 +3,9 @@ FROM rust:slim-buster as builder
 RUN USER=root cargo new --bin oprish
 WORKDIR /oprish
 
-COPY Cargo.lock Cargo.toml ./
-
 RUN apt-get update && apt-get install -y build-essential
+
+COPY Cargo.lock Cargo.toml ./
 
 RUN cargo build --release
 RUN rm src/*.rs
