@@ -1,15 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use std::env;
-
-    use rdkafka::{
-        consumer::{Consumer, StreamConsumer},
-        ClientConfig, Message as KafkaMessage,
-    };
+    use crate::{rocket, Cache};
+    use deadpool_redis::Connection;
     use rocket::{futures::StreamExt, http::Status, local::asynchronous::Client};
     use todel::models::{Info, Message};
-
-    use crate::rocket;
 
     #[rocket::async_test]
     async fn index() {
@@ -31,19 +25,12 @@ mod tests {
         })
         .unwrap();
 
-        let brokers = env::var("BROKERS").unwrap_or_else(|_| "localhost:9092".to_string());
-        let topic = env::var("TOPIC").unwrap_or_else(|_| "oprish".to_string());
+        let pool = client.rocket().state::<Cache>().unwrap();
 
-        let consumer: StreamConsumer = ClientConfig::new()
-            .set("group.id", "oprish_test")
-            .set("bootstrap.servers", &brokers)
-            .set("enable.partition.eof", "false")
-            .set("session.timeout.ms", "6000")
-            .set("auto.offset.reset", "earliest")
-            .create()
-            .unwrap();
-
-        consumer.subscribe(&[&topic]).unwrap();
+        let cache = pool.get().await.unwrap();
+        let cache = Connection::take(cache);
+        let mut cache = cache.into_pubsub();
+        cache.subscribe("oprish-events").await.unwrap();
 
         let response = client
             .post("/messages/")
@@ -55,18 +42,13 @@ mod tests {
         assert_eq!(response.into_string().await.unwrap(), message);
 
         assert_eq!(
-            String::from_utf8(
-                consumer
-                    .stream()
-                    .next()
-                    .await
-                    .unwrap()
-                    .unwrap()
-                    .payload()
-                    .unwrap()
-                    .to_vec()
-            )
-            .unwrap(),
+            cache
+                .into_on_message()
+                .next()
+                .await
+                .unwrap()
+                .get_payload::<String>()
+                .unwrap(),
             message
         );
     }

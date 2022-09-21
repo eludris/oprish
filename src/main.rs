@@ -4,11 +4,9 @@ mod tests;
 #[macro_use]
 extern crate rocket;
 
-mod producer;
 mod ratelimit;
 mod routes;
 
-use crate::producer::Producer;
 use rocket::{Build, Rocket};
 use rocket_db_pools::Database;
 use routes::*;
@@ -30,8 +28,6 @@ fn rocket() -> Rocket<Build> {
 
     let instance_name =
         env::var("INSTANCE_NAME").expect("Can't find \"INSTANCE_NAME\" environment variable");
-    let brokers = env::var("BROKERS").unwrap_or_else(|_| "localhost:9092".to_string());
-    let topic = env::var("TOPIC").unwrap_or_else(|_| "oprish".to_string());
 
     let features = vec![Feature {
         id: 0,
@@ -42,12 +38,9 @@ fn rocket() -> Rocket<Build> {
         features,
     };
 
-    let producer = Producer::new(brokers, topic, "oprish".to_string());
-
     rocket::build()
         .mount("/", get_routes())
         .mount("/messages", messages::get_routes())
         .manage(info)
-        .manage(producer)
         .attach(Cache::init())
 }
