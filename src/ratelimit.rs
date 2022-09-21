@@ -17,7 +17,6 @@ use crate::Cache;
 /// A simple Ratelimiter than can keep track of ratelimit data from KeyDB and add ratelimit
 /// related headers to a response type
 pub struct Ratelimiter {
-    cache: Connection<Cache>,
     key: String,
     reset_after: Duration,
     request_limit: u32,
@@ -28,7 +27,6 @@ pub struct Ratelimiter {
 impl Ratelimiter {
     /// Creates a new Ratelimiter
     pub fn new<I>(
-        cache: Connection<Cache>,
         route: &str,
         identifier: I,
         reset_after: Duration,
@@ -38,7 +36,6 @@ impl Ratelimiter {
         I: Display,
     {
         Ratelimiter {
-            cache,
             key: format!("ratelimit:{}:{}", identifier, route),
             reset_after,
             request_limit,
@@ -48,32 +45,37 @@ impl Ratelimiter {
     }
 
     /// Checks if a bucket is ratelimited, if so returns an Error with an ErrorResponse
-    pub async fn process_ratelimit(&mut self) -> Result<(), (Status, Json<ErrorResponse>)> {
+    pub async fn process_ratelimit(
+        &mut self,
+        cache: &mut Connection<Cache>,
+    ) -> Result<(), (Status, Json<ErrorResponse>)> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or(Duration::ZERO)
             .as_millis() as u64;
 
-        if let (Some(last_reset), Some(request_count)) = self
-            .cache
+        if let (Some(last_reset), Some(request_count)) = cache
             .hget::<&str, (&str, &str), (Option<u64>, Option<u32>)>(
                 &self.key,
                 ("last_reset", "request_count"),
             )
             .await
-            .expect("Coudln't query cache")
+            .expect("Couldn't query cache")
         {
             self.last_reset = last_reset;
             self.request_count = request_count;
             if now - self.last_reset >= self.reset_after.as_millis() as u64 {
-                self.cache.del::<&str, ()>(&self.key).await.unwrap();
-                self.cache
+                cache
+                    .del::<&str, ()>(&self.key)
+                    .await
+                    .expect("Couldn't query cache");
+                cache
                     .hset_multiple::<&str, &str, u64, ()>(
                         &self.key,
                         &[("last_reset", now), ("request_count", 0)],
                     )
                     .await
-                    .unwrap();
+                    .expect("Couldn't query cache");
                 self.last_reset = now;
                 self.request_count = 0;
                 log::debug!("Reset bucket for {}", self.key);
@@ -85,22 +87,22 @@ impl Ratelimiter {
                 })
                 .to_response())
             } else {
-                self.cache
+                cache
                     .hincr::<&str, &str, u8, ()>(&self.key, "request_count", 1)
                     .await
-                    .unwrap();
+                    .expect("Couldn't query cache");
                 self.request_count += 1;
                 Ok(())
             }
         } else {
             log::debug!("New bucket for {}", self.key);
-            self.cache
+            cache
                 .hset_multiple::<&str, &str, u64, ()>(
                     &self.key,
                     &[("last_reset", now), ("request_count", 1)],
                 )
                 .await
-                .unwrap();
+                .expect("Couldn't query cache");
             Ok(())
         }
     }
