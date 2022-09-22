@@ -44,5 +44,5 @@ fn rocket() -> Rocket<Build> {
         .mount("/messages", messages::get_routes())
         .manage(info)
         .attach(Cache::init())
-        .attach(cors::CORS)
+        .attach(cors::Cors)
 }
