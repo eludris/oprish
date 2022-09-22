@@ -4,6 +4,7 @@ mod tests;
 #[macro_use]
 extern crate rocket;
 
+mod cors;
 mod ratelimit;
 mod routes;
 
@@ -43,4 +44,5 @@ fn rocket() -> Rocket<Build> {
         .mount("/messages", messages::get_routes())
         .manage(info)
         .attach(Cache::init())
+        .attach(cors::CORS)
 }
