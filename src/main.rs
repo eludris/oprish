@@ -19,7 +19,7 @@ pub struct Cache(deadpool_redis::Pool);
 
 #[launch]
 fn rocket() -> Rocket<Build> {
-    #[cfg(tests)]
+    #[cfg(test)]
     {
         use std::env;
         env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
