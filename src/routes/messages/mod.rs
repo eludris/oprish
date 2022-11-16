@@ -4,7 +4,7 @@ use deadpool_redis::redis::AsyncCommands;
 use rocket::serde::json::Json;
 use rocket::{Route, State};
 use rocket_db_pools::Connection;
-use todel::models::Message;
+use todel::models::{Message, Payload};
 use todel::oprish::{
     ClientIP, ErrorResponse, ErrorResponseData, RatelimitedRoutResponse, Response,
 };
@@ -42,11 +42,16 @@ pub async fn index(
             )))),
         )
     } else {
+        let payload = Payload::Message(message);
         cache
-            .publish::<&str, String, ()>("oprish-events", serde_json::to_string(&message).unwrap())
+            .publish::<&str, String, ()>("oprish-events", serde_json::to_string(&payload).unwrap())
             .await
             .unwrap();
-        Ok(ratelimiter.wrap_response(Json(Response::Success(message))))
+        if let Payload::Message(message) = payload {
+            Ok(ratelimiter.wrap_response(Json(Response::Success(message))))
+        } else {
+            unreachable!()
+        }
     }
 }
 
