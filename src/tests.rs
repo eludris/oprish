@@ -4,7 +4,7 @@ mod tests {
     use deadpool_redis::Connection;
     use rocket::{futures::StreamExt, http::Status, local::asynchronous::Client};
     use todel::{
-        models::{Info, InstanceRatelimits, Message},
+        models::{Info, InstanceRatelimits, Message, Payload},
         Conf,
     };
 
@@ -27,11 +27,12 @@ mod tests {
     #[rocket::async_test]
     async fn send_message() {
         let client = Client::untracked(rocket()).await.unwrap();
-        let message = serde_json::to_string(&Message {
+        let message = Message {
             author: "Woo".to_string(),
             content: "HeWoo there".to_string(),
-        })
-        .unwrap();
+        };
+        let message_str = serde_json::to_string(&message).unwrap();
+        let payload = serde_json::to_string(&Payload::Message(message)).unwrap();
 
         let pool = client.rocket().state::<Cache>().unwrap();
 
@@ -42,12 +43,12 @@ mod tests {
 
         let response = client
             .post("/messages/")
-            .body(message.clone())
+            .body(&message_str)
             .dispatch()
             .await;
 
         assert_eq!(response.status(), Status::Ok);
-        assert_eq!(response.into_string().await.unwrap(), message);
+        assert_eq!(response.into_string().await.unwrap(), message_str);
 
         assert_eq!(
             cache
@@ -57,7 +58,7 @@ mod tests {
                 .unwrap()
                 .get_payload::<String>()
                 .unwrap(),
-            message
+            payload
         );
     }
 
