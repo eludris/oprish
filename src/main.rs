@@ -8,7 +8,9 @@ mod cors;
 mod ratelimit;
 mod routes;
 
-use rocket::{Build, Rocket};
+use std::env;
+
+use rocket::{Build, Config, Rocket};
 use rocket_db_pools::Database;
 use routes::*;
 use todel::Conf;
@@ -29,7 +31,30 @@ fn rocket() -> Rocket<Build> {
 
     let conf = Conf::new_from_env();
 
-    rocket::build()
+    let config = Config::figment()
+        .merge((
+            "databases.db",
+            rocket_db_pools::Config {
+                url: env::var("DATABASE_URL")
+                    .unwrap_or_else(|_| "mysql://root:root@localhost:3306/eludris".to_string()),
+                min_connections: None,
+                max_connections: 1024,
+                connect_timeout: 3,
+                idle_timeout: None,
+            },
+        ))
+        .merge((
+            "databases.cache",
+            rocket_db_pools::Config {
+                url: env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+                min_connections: None,
+                max_connections: 1024,
+                connect_timeout: 3,
+                idle_timeout: None,
+            },
+        ));
+
+    rocket::custom(config)
         .mount("/", get_routes())
         .mount("/messages", messages::get_routes())
         .manage(conf)
