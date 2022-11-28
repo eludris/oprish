@@ -19,28 +19,20 @@ pub async fn index(
     ratelimiter.process_ratelimit(&mut cache).await?;
     let message = message.into_inner();
     if message.author.len() < 2 || message.author.len() > 32 {
-        Err(ratelimiter
-            .wrap_response(
-                ValidationError {
-                    field_name: "author".to_string(),
-                    error: "Message author has to be between 2 and 32 characters long.".to_string(),
-                }
-                .to_error_response(),
-            )
-            .unwrap())
+        ratelimiter.wrap_response(Err(ValidationError {
+            field_name: "author".to_string(),
+            error: "Message author has to be between 2 and 32 characters long.".to_string(),
+        }
+        .to_error_response()))
     } else if message.content.is_empty() || message.content.len() > conf.oprish.message_limit {
-        Err(ratelimiter
-            .wrap_response(
-                ValidationError {
-                    field_name: "content".to_string(),
-                    error: format!(
-                        "Message content has to be between 1 and {} characters long.",
-                        conf.oprish.message_limit
-                    ),
-                }
-                .to_error_response(),
-            )
-            .unwrap())
+        ratelimiter.wrap_response(Err(ValidationError {
+            field_name: "content".to_string(),
+            error: format!(
+                "Message content has to be between 1 and {} characters long.",
+                conf.oprish.message_limit
+            ),
+        }
+        .to_error_response()))
     } else {
         let payload = Payload::Message(message);
         cache
