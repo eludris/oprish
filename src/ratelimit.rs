@@ -3,15 +3,28 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use crate::Cache;
 use deadpool_redis::redis::AsyncCommands;
-use rocket::{http::Header, serde::json::Json};
+use rocket::http::Header;
 use rocket_db_pools::Connection;
 use todel::{
-    oprish::{ErrorResponse, ErrorResponseData, RatelimitHeaderWrapper},
+    models::{ErrorResponse, ErrorResponseData, RatelimitError},
     Conf,
 };
 
-use crate::Cache;
+pub type RatelimitedRouteResponse<T> =
+    Result<RatelimitHeaderWrapper<T>, RatelimitHeaderWrapper<ErrorResponse>>;
+
+/// The necessary headers for responses
+#[derive(Debug, Responder)]
+#[response(content_type = "json")]
+pub struct RatelimitHeaderWrapper<T> {
+    pub inner: T,
+    pub ratelimit_reset: Header<'static>,
+    pub ratelimit_max: Header<'static>,
+    pub ratelimit_last_reset: Header<'static>,
+    pub ratelimit_request_count: Header<'static>,
+}
 
 // Can derive debug :chad:
 /// A simple Ratelimiter than can keep track of ratelimit data from KeyDB and add ratelimit
@@ -50,7 +63,7 @@ impl Ratelimiter {
     pub async fn process_ratelimit(
         &mut self,
         cache: &mut Connection<Cache>,
-    ) -> Result<(), Json<ErrorResponse>> {
+    ) -> Result<(), RatelimitHeaderWrapper<ErrorResponse>> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or(Duration::ZERO)
@@ -84,9 +97,15 @@ impl Ratelimiter {
             }
             if self.request_count >= self.request_limit {
                 log::info!("Ratelimited bucket {}", self.key);
-                Err(Json(ErrorResponse::new(ErrorResponseData::Ratelimited {
-                    retry_after: self.last_reset + self.reset_after.as_millis() as u64 - now,
-                })))
+                Err(self
+                    .wrap_response(
+                        RatelimitError {
+                            retry_after: self.last_reset + self.reset_after.as_millis() as u64
+                                - now,
+                        }
+                        .to_error_response(),
+                    )
+                    .unwrap())
             } else {
                 cache
                     .hincr::<&str, &str, u8, ()>(&self.key, "request_count", 1)
@@ -109,8 +128,8 @@ impl Ratelimiter {
     }
 
     /// Wraps a response in a RatelimitHeaderWrapper which adds headers relavent to ratelimiting
-    pub fn wrap_response<R>(&self, data: R) -> RatelimitHeaderWrapper<R> {
-        RatelimitHeaderWrapper {
+    pub fn wrap_response<R>(&self, data: R) -> RatelimitedRouteResponse<R> {
+        Ok(RatelimitHeaderWrapper {
             inner: data,
             ratelimit_reset: Header::new(
                 "X-Ratelimit-Reset",
@@ -125,6 +144,6 @@ impl Ratelimiter {
                 "X-Ratelimit-Request-Count",
                 self.request_count.to_string(),
             ),
-        }
+        })
     }
 }
