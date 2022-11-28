@@ -25,6 +25,8 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
     {
         env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
     }
+    dotenv::dotenv().ok();
+    env_logger::try_init().ok();
 
     let config = Config::figment()
         .merge((
@@ -59,9 +61,6 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    dotenv::dotenv().ok();
-    env_logger::try_init().ok();
-
     let _ = rocket()?
         .launch()
         .await
