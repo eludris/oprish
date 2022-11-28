@@ -10,6 +10,7 @@ mod routes;
 
 use std::env;
 
+use anyhow::Context;
 use rocket::{Build, Config, Rocket};
 use rocket_db_pools::Database;
 use routes::*;
@@ -61,7 +62,10 @@ async fn main() -> Result<(), anyhow::Error> {
     dotenv::dotenv().ok();
     env_logger::try_init().ok();
 
-    let _ = rocket()?.launch().await?;
+    let _ = rocket()?
+        .launch()
+        .await
+        .context("Encountered an error while running Rest API")?;
 
     Ok(())
 }
