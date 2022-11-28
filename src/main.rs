@@ -22,7 +22,6 @@ pub struct Cache(deadpool_redis::Pool);
 fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
     #[cfg(test)]
     {
-        use std::env;
         env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
     }
     let conf = Conf::new_from_env()?;
