@@ -19,17 +19,8 @@ use todel::Conf;
 #[database("cache")]
 pub struct Cache(deadpool_redis::Pool);
 
-#[launch]
-fn rocket() -> Rocket<Build> {
-    #[cfg(test)]
-    {
-        use std::env;
-        env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
-    }
-    dotenv::dotenv().ok();
-    env_logger::try_init().ok();
-
-    let conf = Conf::new_from_env();
+fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
+    let conf = Conf::new_from_env()?;
 
     let config = Config::figment()
         .merge((
@@ -54,10 +45,25 @@ fn rocket() -> Rocket<Build> {
             },
         ));
 
-    rocket::custom(config)
+    Ok(rocket::custom(config)
         .mount("/", get_routes())
         .mount("/messages", messages::get_routes())
         .manage(conf)
         .attach(Cache::init())
-        .attach(cors::Cors)
+        .attach(cors::Cors))
+}
+
+#[tokio::main]
+async fn main() -> Result<(), anyhow::Error> {
+    #[cfg(test)]
+    {
+        use std::env;
+        env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
+    }
+    dotenv::dotenv().ok();
+    env_logger::try_init().ok();
+
+    let _ = rocket()?.launch().await?;
+
+    Ok(())
 }

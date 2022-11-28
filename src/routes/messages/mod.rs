@@ -1,13 +1,11 @@
-use crate::ratelimit::Ratelimiter;
+use crate::ratelimit::{RatelimitedRouteResponse, Ratelimiter};
 use crate::Cache;
 use deadpool_redis::redis::AsyncCommands;
 use rocket::serde::json::Json;
 use rocket::{Route, State};
 use rocket_db_pools::Connection;
-use todel::models::{Message, Payload};
-use todel::oprish::{
-    ClientIP, ErrorResponse, ErrorResponseData, RatelimitedRoutResponse, Response,
-};
+use todel::http::ClientIP;
+use todel::models::{ErrorResponse, ErrorResponseData, Message, Payload, ValidationError};
 use todel::Conf;
 
 #[post("/", data = "<message>")]
@@ -16,31 +14,33 @@ pub async fn index(
     address: ClientIP,
     mut cache: Connection<Cache>,
     conf: &State<Conf>,
-) -> RatelimitedRoutResponse<Json<Response<Message>>> {
+) -> RatelimitedRouteResponse<Result<Json<Message>, ErrorResponse>> {
     let mut ratelimiter = Ratelimiter::new("message_create", address, conf.inner());
     ratelimiter.process_ratelimit(&mut cache).await?;
     let message = message.into_inner();
     if message.author.len() < 2 || message.author.len() > 32 {
-        Ok(
-            ratelimiter.wrap_response(Json(Response::Failure(ErrorResponse::new(
-                ErrorResponseData::ValidationError {
-                    invalid_key: "author".to_string(),
-                    info: "Message author has to be between 2 and 32 characters long.".to_string(),
-                },
-            )))),
-        )
+        Err(ratelimiter
+            .wrap_response(
+                ValidationError {
+                    field_name: "author".to_string(),
+                    error: "Message author has to be between 2 and 32 characters long.".to_string(),
+                }
+                .to_error_response(),
+            )
+            .unwrap())
     } else if message.content.is_empty() || message.content.len() > conf.oprish.message_limit {
-        Ok(
-            ratelimiter.wrap_response(Json(Response::Failure(ErrorResponse::new(
-                ErrorResponseData::ValidationError {
-                    invalid_key: "content".to_string(),
-                    info: format!(
+        Err(ratelimiter
+            .wrap_response(
+                ValidationError {
+                    field_name: "content".to_string(),
+                    error: format!(
                         "Message content has to be between 1 and {} characters long.",
                         conf.oprish.message_limit
                     ),
-                },
-            )))),
-        )
+                }
+                .to_error_response(),
+            )
+            .unwrap())
     } else {
         let payload = Payload::Message(message);
         cache
@@ -48,7 +48,7 @@ pub async fn index(
             .await
             .unwrap();
         if let Payload::Message(message) = payload {
-            Ok(ratelimiter.wrap_response(Json(Response::Success(message))))
+            ratelimiter.wrap_response(Ok(Json(message)))
         } else {
             unreachable!()
         }

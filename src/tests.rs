@@ -10,7 +10,7 @@ mod tests {
 
     #[rocket::async_test]
     async fn index() {
-        let client = Client::untracked(rocket()).await.unwrap();
+        let client = Client::untracked(rocket().unwrap()).await.unwrap();
         let response = client.get("/").dispatch().await;
         let conf = &client.rocket().state::<Conf>().unwrap();
         assert_eq!(response.status(), Status::Ok);
@@ -26,7 +26,7 @@ mod tests {
 
     #[rocket::async_test]
     async fn send_message() {
-        let client = Client::untracked(rocket()).await.unwrap();
+        let client = Client::untracked(rocket().unwrap()).await.unwrap();
         let message = Message {
             author: "Woo".to_string(),
             content: "HeWoo there".to_string(),
@@ -64,7 +64,7 @@ mod tests {
 
     #[rocket::async_test]
     async fn ratelimits() {
-        let client = Client::untracked(rocket()).await.unwrap();
+        let client = Client::untracked(rocket().unwrap()).await.unwrap();
         let response = client.get("/ratelimits").dispatch().await;
         let conf = &client.rocket().state::<Conf>().unwrap();
         assert_eq!(response.status(), Status::Ok);
