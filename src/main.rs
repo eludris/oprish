@@ -59,7 +59,7 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
         .attach(cors::Cors))
 }
 
-#[tokio::main]
+#[rocket::main]
 async fn main() -> Result<(), anyhow::Error> {
     let _ = rocket()?
         .launch()
