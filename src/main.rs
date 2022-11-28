@@ -16,7 +16,7 @@ use routes::*;
 use todel::Conf;
 
 #[derive(Database)]
-#[database("redis-cache")]
+#[database("cache")]
 pub struct Cache(deadpool_redis::Pool);
 
 #[launch]
