@@ -98,7 +98,7 @@ impl Ratelimiter {
             if self.request_count >= self.request_limit {
                 log::info!("Ratelimited bucket {}", self.key);
                 Err(self
-                    .wrap_response(
+                    .wrap_response::<_, ()>(
                         RatelimitError {
                             retry_after: self.last_reset + self.reset_after.as_millis() as u64
                                 - now,
@@ -128,7 +128,7 @@ impl Ratelimiter {
     }
 
     /// Wraps a response in a RatelimitHeaderWrapper which adds headers relavent to ratelimiting
-    pub fn wrap_response<R>(&self, data: R) -> RatelimitedRouteResponse<R> {
+    pub fn wrap_response<T, E>(&self, data: T) -> Result<RatelimitHeaderWrapper<T>, E> {
         Ok(RatelimitHeaderWrapper {
             inner: data,
             ratelimit_reset: Header::new(
