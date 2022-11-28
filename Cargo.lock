@@ -47,6 +47,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.66"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
+
+[[package]]
 name = "async-stream"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -785,6 +791,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 name = "oprish"
 version = "0.3.0-rc.2"
 dependencies = [
+ "anyhow",
  "deadpool-redis",
  "dotenv",
  "env_logger",
@@ -794,6 +801,7 @@ dependencies = [
  "serde",
  "serde_json",
  "todel",
+ "tokio",
 ]
 
 [[package]]
@@ -1366,8 +1374,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "todel"
 version = "0.2.4"
-source = "git+https://github.com/eludris/todel#e5e973e703abd48704645ca708f57b974fb08b6e"
+source = "git+https://github.com/eludris/todel#c859c080d181bf78712542721faf03177b1b5f8e"
 dependencies = [
+ "anyhow",
  "lazy_static",
  "log",
  "rocket",
@@ -1377,9 +1386,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.21.2"
+version = "1.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9e03c497dc955702ba729190dc4aac6f2a0ce97f913e5b1b5912fc5039d9099"
+checksum = "d76ce4a75fb488c605c54bf610f221cea8b0dafb53333c1a67e8ee199dcd2ae3"
 dependencies = [
  "autocfg",
  "bytes",
