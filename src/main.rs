@@ -24,7 +24,6 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
     {
         env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
     }
-    let conf = Conf::new_from_env()?;
 
     let config = Config::figment()
         .merge((
@@ -52,7 +51,7 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
     Ok(rocket::custom(config)
         .mount("/", get_routes())
         .mount("/messages", messages::get_routes())
-        .manage(conf)
+        .manage(Conf::new_from_env()?)
         .attach(Cache::init())
         .attach(cors::Cors))
 }
