@@ -34,12 +34,12 @@ pub async fn index(
         }
         .to_error_response()))
     } else {
-        let payload = Payload::Message(message);
+        let payload = Payload::MessageCreate(message);
         cache
             .publish::<&str, String, ()>("oprish-events", serde_json::to_string(&payload).unwrap())
             .await
             .unwrap();
-        if let Payload::Message(message) = payload {
+        if let Payload::MessageCreate(message) = payload {
             ratelimiter.wrap_response(Ok(Json(message)))
         } else {
             unreachable!()

@@ -32,7 +32,7 @@ mod tests {
             content: "HeWoo there".to_string(),
         };
         let message_str = serde_json::to_string(&message).unwrap();
-        let payload = serde_json::to_string(&Payload::Message(message)).unwrap();
+        let payload = serde_json::to_string(&Payload::MessageCreate(message)).unwrap();
 
         let pool = client.rocket().state::<Cache>().unwrap();
 
