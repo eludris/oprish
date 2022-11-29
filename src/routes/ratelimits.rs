@@ -19,6 +19,6 @@ pub async fn ratelimits(
     ratelimiter.wrap_response(Json(InstanceRatelimits {
         oprish: conf.oprish.ratelimits.clone(),
         pandemonium: conf.pandemonium.ratelimit.clone(),
-        effis: conf.effis.ratelimit.clone(),
+        effis: conf.effis.ratelimits.clone(),
     }))
 }
