@@ -4,7 +4,7 @@ mod tests {
     use deadpool_redis::Connection;
     use rocket::{futures::StreamExt, http::Status, local::asynchronous::Client};
     use todel::{
-        models::{Info, InstanceRatelimits, Message, Payload},
+        models::{InstanceInfo, InstanceRatelimits, Message, Payload},
         Conf,
     };
 
@@ -16,9 +16,13 @@ mod tests {
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.into_string().await.unwrap(),
-            serde_json::to_string(&Info {
+            serde_json::to_string(&InstanceInfo {
                 instance_name: conf.instance_name.clone(),
                 description: conf.description.clone(),
+                message_limit: conf.oprish.message_limit,
+                oprish_url: conf.oprish.url.clone(),
+                pandemonium_url: conf.pandemonium.url.clone(),
+                effis_url: conf.effis.url.clone(),
             })
             .unwrap()
         )
