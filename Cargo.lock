@@ -2536,8 +2536,8 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "todel"
-version = "0.2.4"
-source = "git+https://github.com/eludris/todel#b832ff92b031f66fd3d2159238d14a0788cc0ea9"
+version = "0.3.0"
+source = "git+https://github.com/eludris/todel#c7c0082770f58b51121e551f3e15b71cca112731"
 dependencies = [
  "anyhow",
  "ffprobe",
