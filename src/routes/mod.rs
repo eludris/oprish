@@ -25,6 +25,8 @@ pub async fn index(
         oprish_url: conf.oprish.url.clone(),
         pandemonium_url: conf.pandemonium.url.clone(),
         effis_url: conf.effis.url.clone(),
+        file_size: conf.effis.file_size,
+        attachment_file_size: conf.effis.attachment_file_size,
     }))
 }
 
