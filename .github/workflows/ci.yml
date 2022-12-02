@@ -8,7 +8,7 @@ concurrency:
 
 jobs:
   format:
-    name: Formattin
+    name: Formatting
 
     # Do not run on PRs from the same repo, since `push` already handles them.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
