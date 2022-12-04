@@ -1,24 +1,28 @@
+# syntax=docker/dockerfile:1.4
 FROM rust:slim-buster as builder
 
-RUN USER=root cargo new --bin oprish
 WORKDIR /oprish
 
-RUN apt-get update && apt-get install -y build-essential
+# Remove docker's default of removing cache after use.
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+ENV PACKAGES build-essential
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -yqq --no-install-recommends \
+    $PACKAGES && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.lock Cargo.toml ./
-
-RUN cargo build --release
-RUN rm src/*.rs
-
 COPY ./src ./src
 
-RUN rm ./target/release/deps/oprish*
-RUN cargo build --release
-
+RUN --mount=type=cache,target=./target \
+    cargo build --release
+# Other image cannot access the target folder.
+RUN --mount=type=cache,target=./target \
+    cp ./target/release/oprish /usr/local/bin/oprish
 
 FROM debian:buster-slim
 
-COPY --from=builder /oprish/target/release/oprish /bin/oprish
+COPY --from=builder /usr/local/bin/oprish /bin/oprish
 
 # Don't forget to also publish these ports in the docker-compose.yml file.
 ARG PORT=7159
@@ -30,4 +34,3 @@ ENV ROCKET_PORT $PORT
 ENV RUST_LOG debug
 
 CMD ["/bin/oprish"]
-
