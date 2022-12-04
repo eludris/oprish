@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1
 FROM rust:slim-buster as builder
 
 WORKDIR /oprish
@@ -14,10 +14,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 COPY Cargo.lock Cargo.toml ./
 COPY ./src ./src
 
-RUN --mount=type=cache,target=./target \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/oprish/target \
     cargo build --release
 # Other image cannot access the target folder.
-RUN --mount=type=cache,target=./target \
+RUN --mount=type=cache,target=/oprish/target \
     cp ./target/release/oprish /usr/local/bin/oprish
 
 FROM debian:buster-slim
