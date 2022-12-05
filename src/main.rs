@@ -30,6 +30,13 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
 
     let config = Config::figment()
         .merge((
+            "port",
+            env::var("OPRISH_PORT")
+                .unwrap_or_else(|_| "7159".to_string())
+                .parse::<u32>()
+                .context("Invalid \"OPRISH_PORT\" environment variable")?,
+        ))
+        .merge((
             "databases.db",
             rocket_db_pools::Config {
                 url: env::var("DATABASE_URL")
